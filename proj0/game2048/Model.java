@@ -1,6 +1,7 @@
 package game2048;
 
 import java.util.Formatter;
+import java.util.HashSet;
 import java.util.Observable;
 
 
@@ -114,11 +115,93 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
 
+        board.setViewingPerspective(side);
+        for(int c = 0; c < board.size(); ++c){
+            int n = board.size() - 1;
+            for(int r = board.size() - 2; r >= 0; --r){         //从上往下故减减
+                Tile t = board.tile(c, r);
+                if (t != null){
+                    if(board.tile(c, n) == null){
+                        board.move(c, n, t);
+                    }else if(board.tile(c, n) != null){
+                        if(t.value() == board.tile(c, n).value()){
+                            board.move(c, n, t);
+                            score += t.value() * 2;
+                        }else{
+                            board.move(c, n - 1, t);
+                        }
+                        --n;
+                    }
+                    changed = true;
+                }
+
+            }
+        }
+
+        board.setViewingPerspective(side.NORTH);
+
+/*一种*/
+//        board.startViewingFrom(side);
+//        for (int i = 0; i < board.size(); i++) {
+//            if (changeSingleCol(i)) {
+//                changed = true;
+//            }
+//        }
+//        board.startViewingFrom(Side.NORTH);
+
+        //向上操作
+//        for (int c = 0; c < board.size(); ++c) {
+//            for (int r = 0; r < board.size(); ++r) {
+//                Tile t = board.tile(c, r);
+//                if (board.tile(c, r) != null) {
+//                    if (r == 3) continue;
+//                    //for (int )
+//
+//                    Tile t1 = board.tile(c, r + 1);
+//                    Tile t2 = board.tile(c, 3);
+//                    //if (t.value() == t1.value()) {
+//                        board.move(c, 3, t);
+//                        changed = true;
+//                        score += t.value();
+//
+//                }
+//            }
+//        }
+
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
+    }
+
+    private boolean changeSingleCol(int col) {
+        boolean changed = false;
+        int size = board.size();
+        int end = size - 1;
+        for (int source = size - 2; source >= 0; source--) {
+            Tile t = board.tile(col, source);
+            if (t == null) {
+                continue;
+            }
+            int dest = availablePos(source, end, col);
+            if (dest != source) {
+                if (board.move(col, dest, t)) {
+                    score += board.tile(col, dest).value();
+                    end = dest - 1;
+                }
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    private int availablePos(int source, int end, int col) {
+        for (int i = end; i > source; i--) {
+            if (board.tile(col, i) == null || board.tile(col, i).value() == board.tile(col, source).value())
+                return i;
+        }
+        return source;
     }
 
     /** Checks if the game is over and sets the gameOver variable
@@ -138,7 +221,17 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for (int i = 0; i < b.size(); ++i) {
+            for (int j = 0; j < b.size(); ++j){
+                if (b.tile(i, j) == null)
+                    return true;
+            }
+        }
         return false;
+        //System.out.println(b.tile(0, 0));
+
+
+        // return false;
     }
 
     /**
@@ -148,7 +241,18 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        //System.out.println(b.tile(0, 3));
+        for (int i = 0; i < b.size(); ++i) {
+            for (int j = 0; j < b.size(); ++j){
+                if(b.tile(i, j) == null)                    //注意这里的null值，是不会反应出title的值的，必须单独判断
+                    continue;
+                if (b.tile(i, j).value() == MAX_PIECE)      //如果是MAX_PICE，返回true
+                    return true;
+            }
+        }
         return false;
+
+        //return false;
     }
 
     /**
@@ -159,6 +263,32 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+
+        //第一种情况，存在空board
+        for (int i = 0; i < b.size(); ++i) {
+            for (int j = 0; j < b.size(); ++j){
+                if (b.tile(i, j) == null)
+                    return true;
+            }
+        }
+
+            //最后一列考虑
+        for (int i = 0; i < b.size() - 1; ++i){
+            if (b.tile(b.size() - 1, i).value() == b.tile(b.size() - 1, i+1).value())
+                return true;
+        }
+
+        //第二种情况, 存在相邻两个board相等
+        for (int i = 0; i < b.size() - 1; ++i) {
+            for (int j = 0; j < b.size() - 1; ++j) {
+                if (b.tile(i, j).value() == b.tile(i+1, j).value())
+                    return true;
+                if(b.tile(i, j).value() == b.tile(i, j+1).value())
+                    return true;
+            }
+        }
+
+
         return false;
     }
 
