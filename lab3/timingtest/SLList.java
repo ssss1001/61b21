@@ -72,6 +72,7 @@ public class SLList<Item> {
 		return size;
 	}
 
+	/*测试&&创建模板*/
 	public static void main(String[] args) {
 		/* Creates a list of one integer, namely 10 */
 		SLList L = new SLList();
